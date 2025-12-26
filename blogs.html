@@ -69,7 +69,7 @@
         </div>
       </div>
     </div>
-    <section id="blog-list" class="section">
+    <section id="blog-section" class="section">
       <div class="w-layout-blockcontainer container w-container">
         <ul role="list" class="blog-list">
           <li>
@@ -80,7 +80,7 @@
             </div>
           </li>
         </ul>
-        <div data-list="posts" class="project-wrapper blog">
+        <div id="blog-list" data-list="posts" class="project-wrapper blog">
           <div data-item="post" class="project-wrap-v2">
             <a data-field="link" href="blogs/varlik-ve-dahasi.html" class="w-inline-block">
               <div class="project-image-wrap"><img class="blog-main-image" src="images/project-3_1project-3.webp" alt="" sizes="(max-width: 767px) 100vw, (max-width: 991px) 727.9921875px, 939.9921875px" data-field="cover" loading="lazy" srcset="images/project-3_1project-3.webp 500w, images/project-3_1project-3.webp 800w, images/project-3_1project-3.webp 1080w, images/project-3_1project-3.webp 1600w, images/project-3_1project-3.webp 2000w, images/project-3_1project-3.webp 2046w">
@@ -187,7 +187,11 @@
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+    import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
     // TODO: Add SDKs for Firebase products that you want to use
     // https://firebase.google.com/docs/web/setup#available-libraries
   
@@ -207,6 +211,56 @@
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
     const db = getFirestore(app);
+    const blogListEl = document.getElementById("blog-list");
+    const templateEl = blogListEl.querySelector('[data-item="post"]');
+console.log("🧩 template bulundu mu:", !!templateEl);
+templateEl.style.display = "none";
+const snapshot = await getDocs(collection(db, "posts"));
+snapshot.forEach((doc) => {
+  const post = doc.data();
+
+  // 1) şablondan kopya kart üret
+  const card = templateEl.cloneNode(true);
+  card.style.display = ""; // gizlemeyi kaldır
+
+  // 2) title
+  const titleEl = card.querySelector('[data-field="title"]');
+  if (titleEl) titleEl.textContent = post.title || "";
+
+  // 3) author
+  const authorEl = card.querySelector('[data-field="author"]');
+  if (authorEl) authorEl.textContent = post.author || "";
+
+  // 4) date
+  const dateEl = card.querySelector('[data-field="date"]');
+  if (dateEl) dateEl.textContent = post.date || "";
+
+  // 5) readTime
+  const readTimeEl = card.querySelector('[data-field="readTime"]');
+  if (readTimeEl) readTimeEl.textContent = post.readTime || "";
+
+  // 6) link (a tag)
+  const linkEl = card.querySelector('[data-field="link"]');
+  if (linkEl && post.slug) linkEl.href = `blogs/${post.slug}.html`;
+
+  // 7) cover image
+  const coverImgEl = card.querySelector('[data-field="cover"]');
+  if (coverImgEl && post.coverUrl) coverImgEl.src = post.coverUrl;
+
+  // 8) listeye ekle
+  blogListEl.appendChild(card);
+});
+snapshot.forEach((doc) => {
+  const post = doc.data();
+
+  const div = document.createElement("div");
+  div.innerHTML = `
+    <h3>${post.title}</h3>
+    <p>${post.author}</p>
+  `;
+
+  blogListEl.appendChild(div);
+});
     console.log("🔥 analytics+firestore hazır", { app, analytics, db });
   </script>
 </body>
